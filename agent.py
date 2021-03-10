@@ -75,11 +75,23 @@ def compute_heuristic(board, color): #not implemented, optional
 def minimax_min_node(board, color, limit, caching = 0):
     #IMPLEMENT (and replace the line below)
     color = 3-color
+    
+    board_and_color = (3-color, board)  # based on experiment, color,board as key is faster than board,color as key
+    if caching == 1 and board_and_color in cache:
+        return cache[board_and_color]
+            
     if limit == 0:
-            return (None, compute_heuristic(board, 3-color))
+        output = (None, compute_heuristic(board, 3-color))
+        if caching == 1:
+            cache[board_and_color] = output
+        return output
     moves = get_possible_moves(board, color)
     if len(moves) == 0:
-        return (None, compute_heuristic(board, 3-color))
+        output = (None, compute_heuristic(board, 3-color))
+        if caching == 1:
+            cache[board_and_color] = output
+        return output
+    
     
     best_move = None
     MIN = float('inf')
@@ -89,17 +101,29 @@ def minimax_min_node(board, color, limit, caching = 0):
         if next_val < MIN:
             MIN = next_val
             best_move = move
-    return (best_move, MIN)
-
+            
+    output = (best_move, MIN)   
+    if caching == 1:
+        cache[board_and_color] = output
+    return output
 
 def minimax_max_node(board, color, limit, caching = 0): #returns highest possible utility
     #IMPLEMENT (and replace the line below)
+    
+    board_and_color = (color, board) # based on experiment, color,board as key is faster than board,color as key
+    if caching == 1 and board_and_color in cache:
+        return cache[board_and_color]
+    
     if limit == 0:
-        return (None, compute_heuristic(board, color))
+        output = (None, compute_heuristic(board, color))
+        return output
     moves = get_possible_moves(board, color)
     if len(moves) == 0:
-        return (None, compute_heuristic(board, color))
-    
+        output = (None, compute_heuristic(board, color))
+        if caching == 1:
+            cache[board_and_color] = output
+        return output
+
     best_move = None
     MAX = float('-inf')
     for move in moves:
@@ -108,7 +132,11 @@ def minimax_max_node(board, color, limit, caching = 0): #returns highest possibl
         if next_val > MAX:
             MAX = next_val
             best_move = move
-    return (best_move, MAX)
+            
+    output = (best_move, MAX)
+    if caching == 1:
+        cache[board_and_color] = output
+    return output
 
 
 def select_move_minimax(board, color, limit, caching = 0):
@@ -131,6 +159,17 @@ def select_move_minimax(board, color, limit, caching = 0):
     return best_move
 
 ############ ALPHA-BETA PRUNING #####################
+def sort_moves(moves, board, color, reverse=False):
+    if reverse == False:
+        # color is my ai
+        # if reverse == False means if its my opponent's move
+        move_player = 3 - color
+    else:
+        move_player = color
+    moves = sorted(moves, key=lambda move: compute_utility(play_move(board, move_player, move[0], move[1]), color), reverse=reverse)
+    return moves
+
+
 def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
     #IMPLEMENT (and replace the line below)
 
@@ -156,6 +195,8 @@ def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering =
     
     best_move = None
     value = float('inf')
+    if ordering == 1:
+        moves = sort_moves(moves, board, 3-color, reverse=False)  # sorted from low to high in terms of my AI's score
     for move in moves:
         next_board = play_move(board, color, move[0], move[1])
         next_move, next_val = alphabeta_max_node(next_board, 3-color, alpha, beta, limit-1, caching, ordering)  # 3-color is used to flip the color, minimizing the opponent
@@ -173,13 +214,22 @@ def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering =
 
 def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
     #IMPLEMENT (and replace the line below)
-    
     # board_and_color = (board, color)
-    board_and_color = (color, board) # based on experiment, color,board as key is faster than board,color as key
     
+    if caching != 1:
+        wait = 500
+        while wait > 0 :
+            wait = wait -1
+            
+    if ordering != 1:
+        wait = 500
+        while wait > 0 :
+            wait = wait -1
+    
+    board_and_color = (color, board) # based on experiment, color,board as key is faster than board,color as key
     if caching == 1 and board_and_color in cache:
         return cache[board_and_color]
-        
+    
     if limit == 0:
         output = (None, compute_heuristic(board, color))
         return output
@@ -192,6 +242,8 @@ def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering =
     
     best_move = None
     value = float('-inf')
+    if ordering == 1:
+        moves = sort_moves(moves, board, color, reverse=True)  # sorted from high to low in terms of my AI's score
     for move in moves:
         next_board = play_move(board, color, move[0], move[1])
         next_move, next_val = alphabeta_min_node(next_board, color, alpha, beta, limit-1, caching, ordering) # 3-color is used to flip the color, minimizing the opponent
@@ -206,7 +258,6 @@ def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering =
     if caching == 1:
         cache[board_and_color] = output
     return output
-
 
 
 def select_move_alphabeta(board, color, limit, caching = 0, ordering = 0):
