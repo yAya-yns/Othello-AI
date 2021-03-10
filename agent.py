@@ -3,17 +3,22 @@ An AI player for Othello.
 Notes:
 - Player 1 (dark): 1, Player 2 (light): 2
 
-Question Answer: 1
+Questions Answer: 
 
 -please include a (short) description that details your heuristics 
 as a comment at the start of your solution file.
+1. Corners are the best
+2. walls are good
+3. controlling the center pieces are also good (opening)
+    - referencing https://www.youtube.com/watch?v=sJgLi32jMo0&ab_channel=KeithGalli
+4. Check the moves available 
+5. Try to avoid the ring closes to the boarder, which could give opportunity for your opponent to get the boarder.
+
+
 
 - Experiment with the depth limit on boards that are larger than 4x4.
 What is the largest board you can play on without timing out after 10 seconds?
-Answer: with depth size 5, we can go up to board 27x27
-
-
-
+Answer: with depth size 5, we can go up to board 27x27 without cachining and ordering
 
 
 
@@ -65,11 +70,103 @@ def compute_utility(board, color):
         return player_1 - player_2
     else:
         return player_2 - player_1
+    
 
 # Better heuristic value of board
+def board_weight(board):
+    corner_weight = 10
+    wall_weight = 5
+    center_weight = 3
+    normal_weight = 1
+    boarder_neighbour = 0
+    corner_neighbour = -1
+    
+    weight = []
+    size = len(board)
+    for i in range(size):
+        weight.append([normal_weight]*size)
+
+    # wall
+    for i in range(1,size-1):  # skipping corner
+        weight[i][0] = wall_weight
+        weight[i][size-1] = wall_weight
+        weight[0][i] = wall_weight
+        weight[0][size-1] = wall_weight
+        
+    # higher weight at corners
+    weight[0][0] = corner_weight
+    weight[0][size-1] = corner_weight
+    weight[size-1][0] = corner_weight
+    weight[size-1][size-1] = corner_weight
+    
+    if size > 4:  # if size =4, then wall is the corner neighbour
+    # corner_neighbour
+    # corner upper left
+        weight[0][1] = corner_neighbour
+        weight[1][0] = corner_neighbour
+        weight[1][1] = corner_neighbour
+        
+        # corner upper right
+        weight[0][size-2] = corner_neighbour
+        weight[1][size-1] = corner_neighbour
+        weight[1][size-2] = corner_neighbour
+        
+        # corner lower left
+        weight[size-1][1] = corner_neighbour
+        weight[size-2][0] = corner_neighbour
+        weight[size-2][1] = corner_neighbour
+        
+        # corner lower right
+        weight[size-1][size-2] = corner_neighbour
+        weight[size-2][size-1] = corner_neighbour
+        weight[size-2][size-2] = corner_neighbour
+        
+    if size > 4:  # if center = 4, we should aim the wall instead of center
+        weight[size//2][size//2] = center_weight
+        weight[size//2][size//2-1] = center_weight
+        weight[size//2-1][size//2] = center_weight
+        weight[size//2-1][size//2-1] = center_weight
+        
+    return weight
+    
+def compute_utility_heuristically(board, color):   
+    weight = board_weight(board) 
+    player_1, player_2 = get_score_heuristically1(board, weight)
+    if color==1:  # my ai is player_1
+        return player_1 - player_2
+    else:
+        return player_2 - player_1
+    
+def get_score_heuristically1(board, weight):
+    p1_count = 0
+    p2_count = 0
+    for i in range(len(board)):
+        for j in range(len(board)):
+            if board[i][j] == 1:
+                p1_count += weight[i][j]
+            elif board[i][j] == 2:
+                p2_count += weight[i][j]
+    return p1_count, p2_count
+    
+def compute_num_available_move(board, player):
+    """
+    Return a list of all possible (column,row) tuples that player can play on
+    the current board. 
+    """
+    result_count = 0
+    for i in range(len(board)):
+        for j in range(len(board)):
+            if board[j][i] == 0:
+                lines = find_lines(board,i,j,player)
+                if lines: 
+                    result_count += 1
+    return result_count
+    
 def compute_heuristic(board, color): #not implemented, optional
     #IMPLEMENT
-    return compute_utility(board, color)
+    heuristic_utility = compute_utility_heuristically(board, color)
+    num_available_move = compute_num_available_move(board, color)
+    return heuristic_utility + num_available_move
 
 ############ MINIMAX ###############################
 def minimax_min_node(board, color, limit, caching = 0):
@@ -81,13 +178,13 @@ def minimax_min_node(board, color, limit, caching = 0):
         return cache[board_and_color]
             
     if limit == 0:
-        output = (None, compute_heuristic(board, 3-color))
+        output = (None, compute_utility(board, 3-color))
         if caching == 1:
             cache[board_and_color] = output
         return output
     moves = get_possible_moves(board, color)
     if len(moves) == 0:
-        output = (None, compute_heuristic(board, 3-color))
+        output = (None, compute_utility(board, 3-color))
         if caching == 1:
             cache[board_and_color] = output
         return output
@@ -115,11 +212,11 @@ def minimax_max_node(board, color, limit, caching = 0): #returns highest possibl
         return cache[board_and_color]
     
     if limit == 0:
-        output = (None, compute_heuristic(board, color))
+        output = (None, compute_utility(board, color))
         return output
     moves = get_possible_moves(board, color)
     if len(moves) == 0:
-        output = (None, compute_heuristic(board, color))
+        output = (None, compute_utility(board, color))
         if caching == 1:
             cache[board_and_color] = output
         return output
@@ -182,13 +279,13 @@ def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering =
         return cache[board_and_color]
             
     if limit == 0:
-        output = (None, compute_heuristic(board, 3-color))
+        output = (None, compute_utility(board, 3-color))
         if caching == 1:
             cache[board_and_color] = output
         return output
     moves = get_possible_moves(board, color)
     if len(moves) == 0:
-        output = (None, compute_heuristic(board, 3-color))
+        output = (None, compute_utility(board, 3-color))
         if caching == 1:
             cache[board_and_color] = output
         return output
@@ -231,11 +328,11 @@ def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering =
         return cache[board_and_color]
     
     if limit == 0:
-        output = (None, compute_heuristic(board, color))
+        output = (None, compute_utility(board, color))
         return output
     moves = get_possible_moves(board, color)
     if len(moves) == 0:
-        output = (None, compute_heuristic(board, color))
+        output = (None, compute_utility(board, color))
         if caching == 1:
             cache[board_and_color] = output
         return output
