@@ -1,6 +1,7 @@
 # Othello-AI
 ![plot](./othello_gui_img.png)
 ### Note: 
+- time limit for AI is 10s, it will lose if timeout.
 - to play with AI with heuristics, replace ```agent.py``` with ```agent_heuristic.py``` in the following commands.
 - Run the command in native terminal instead of terminal in IDE(such as VSCode, Pycharm, etc.).
 ## Commands:
@@ -13,8 +14,8 @@
 - To play two AI against each other
     - ```$python3 othello_gui.py -d 4 -a agent.py -b randy_ai.py```
 - To play with ALPHABETA with a depth limit
-    - ```$python3 othello gui.py -d 6 -a agent.py -l 5```
+    - ```$python3 othello_gui.py -d 6 -a agent.py -l 5```
 - To play with ALPHABETA with a caching State
-    - ```$python3 othello gui.py -d 6 -a agent.py -c```
+    - ```$python3 othello_gui.py -d 6 -a agent.py -c```
 - To play with ALPHABETA with a node selection heuristic
-    - ```$python3 othello gui.py -d 6 -a agent.py -o```
+    - ```$python3 othello_gui.py -d 6 -a agent.py -o```
