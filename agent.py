@@ -135,19 +135,23 @@ def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering =
     #IMPLEMENT (and replace the line below)
 
     color = 3-color  # color: opponent's color, 3-color is my agent's color
-    if caching == 1 and (board, 3-color) in cache:
-        return cache[(board, 3-color)]
+    
+    # board_and_color = (board, 3-color)
+    board_and_color = (3-color, board)  # based on experiment, color,board as key is faster than board,color as key
+    
+    if caching == 1 and board_and_color in cache:
+        return cache[board_and_color]
             
     if limit == 0:
         output = (None, compute_heuristic(board, 3-color))
         if caching == 1:
-            cache[(board,3-color)] = output
+            cache[board_and_color] = output
         return output
     moves = get_possible_moves(board, color)
     if len(moves) == 0:
         output = (None, compute_heuristic(board, 3-color))
         if caching == 1:
-            cache[(board,3-color)] = output
+            cache[board_and_color] = output
         return output
     
     best_move = None
@@ -164,12 +168,15 @@ def alphabeta_min_node(board, color, alpha, beta, limit, caching = 0, ordering =
         beta = min(beta, value)
     output = (best_move, value)    
     if caching == 1:
-            cache[(board,color)] = output
+        cache[board_and_color] = output
     return output
 
 def alphabeta_max_node(board, color, alpha, beta, limit, caching = 0, ordering = 0):
     #IMPLEMENT (and replace the line below)
-    board_and_color = (board, color)
+    
+    # board_and_color = (board, color)
+    board_and_color = (color, board) # based on experiment, color,board as key is faster than board,color as key
+    
     if caching == 1 and board_and_color in cache:
         return cache[board_and_color]
         
