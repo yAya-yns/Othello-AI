@@ -429,6 +429,7 @@ def run_ai():
                                   # 1 : dark disk (player 1)
                                   # 2 : light disk (player 2)
 
+            board = tuple(tuple(row) for row in board)
             # Select the move and send it to the manager
             if (minimax == 1): #run this if the minimax flag is given
                 movei, movej = select_move_minimax(board, color, limit, caching)
